@@ -580,7 +580,7 @@
     const etc       = val('f-etc');
 
     if (!company || !name || !phone || !email) {
-      alert('필수 항목(기업명, 담당자명, 연락처, 이메일)을 입력해주세요.');
+      showToast('필수 항목(기업명, 담당자명, 연락처, 이메일)을 입력해주세요.', true);
       return false;
     }
 
@@ -624,16 +624,50 @@
       기타요청사항: etc
     });
 
-    // 상담원이 바로 볼 수 있도록 요약 내용을 클립보드에 복사 + 채팅창 오픈
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(summary).catch(() => {});
-    }
+    // 채팅창을 열면서 문의 내용을 입력창에 미리 채워넣음 (사용자가 전송 버튼만 누르면 바로 전달됨)
+    ChannelIO('openChat', undefined, summary);
 
-    ChannelIO('showMessenger');
-
-    alert('문의 내용이 채널톡으로 전달되었습니다.\n열린 채팅창에 메시지를 붙여넣기(Ctrl+V) 후 전송해주시면 더 빠르게 확인 가능합니다.');
+    showToast('채팅창이 열렸어요. 내용 확인 후 전송 버튼을 눌러주시면 문의가 접수됩니다.', false);
 
     return false;
+  }
+
+  // 논블로킹 토스트 알림 (alert() 대신 사용, 메인 스레드를 막지 않음)
+  let toastTimer = null;
+  function showToast(message, isError) {
+    let el = document.getElementById('inquiryToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'inquiryToast';
+      el.style.position = 'fixed';
+      el.style.left = '50%';
+      el.style.bottom = '32px';
+      el.style.transform = 'translateX(-50%)';
+      el.style.zIndex = '9999';
+      el.style.maxWidth = '90vw';
+      el.style.padding = '14px 20px';
+      el.style.borderRadius = '999px';
+      el.style.fontSize = '14px';
+      el.style.fontWeight = '600';
+      el.style.color = '#fff';
+      el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.25)';
+      el.style.transition = 'opacity .3s ease, transform .3s ease';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+    }
+    el.style.backgroundColor = isError ? '#A83A16' : '#141110';
+    el.textContent = message;
+
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateX(-50%) translateY(-4px)';
+    });
+
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-50%)';
+    }, 4000);
   }
 </script>
 
