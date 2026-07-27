@@ -597,37 +597,40 @@
       `회신 요청일: ${replyDate || '-'}\n` +
       `기타 요청사항: ${etc || '-'}`;
 
-    // 채널톡에 고객 정보 업데이트
-    ChannelIO('updateUser', {
-      profile: {
-        name: name,
-        mobileNumber: phone,
-        email: email,
-        company: company
-      }
-    });
-
-    // 문의 내용을 이벤트로 전송 (채널톡 상담원이 유저 타임라인에서 확인 가능)
-    ChannelIO('track', '홈페이지_문의폼_제출', {
-      기업명: company,
-      담당자: name,
-      연락처: phone,
-      이메일: email,
-      행사목적: purpose,
-      참가인원_남: male,
-      참가인원_여: female,
-      연령대: age,
-      예산: budget,
-      행사일정_시작: dateStart,
-      행사일정_종료: dateEnd,
-      회신요청일: replyDate,
-      기타요청사항: etc
-    });
-
-    // 채팅창을 열면서 문의 내용을 입력창에 미리 채워넣음 (사용자가 전송 버튼만 누르면 바로 전달됨)
+    // 채팅창을 최우선으로 열면서 문의 내용을 입력창에 미리 채워넣음 (반응 속도 우선)
     ChannelIO('openChat', undefined, summary);
 
-    showToast('채팅창이 열렸어요. 내용 확인 후 전송 버튼을 눌러주시면 문의가 접수됩니다.', false);
+    showToast('채팅창이 열렸어요. "문의하기" 버튼을 누르면 작성하신 내용이 보여요. 확인 후 전송해주세요.', false);
+
+    // 부가 작업(고객정보 갱신, 이벤트 로깅)은 클릭 반응을 막지 않도록 다음 프레임 이후로 지연 처리
+    setTimeout(() => {
+      // 채널톡에 고객 정보 업데이트
+      ChannelIO('updateUser', {
+        profile: {
+          name: name,
+          mobileNumber: phone,
+          email: email,
+          company: company
+        }
+      });
+
+      // 문의 내용을 이벤트로 전송 (채널톡 상담원이 유저 타임라인에서 확인 가능)
+      ChannelIO('track', '홈페이지_문의폼_제출', {
+        기업명: company,
+        담당자: name,
+        연락처: phone,
+        이메일: email,
+        행사목적: purpose,
+        참가인원_남: male,
+        참가인원_여: female,
+        연령대: age,
+        예산: budget,
+        행사일정_시작: dateStart,
+        행사일정_종료: dateEnd,
+        회신요청일: replyDate,
+        기타요청사항: etc
+      });
+    }, 0);
 
     return false;
   }
